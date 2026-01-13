@@ -1,0 +1,34 @@
+## See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# Notes
+notes.md
+
+# User-specific files
+*.user
+*.userosscache
+*.suo
+*.sln.docstates
+
+# Build results
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio
+.vs/
+
+# Rider
+.idea/
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+bld/
+[Ll]og/
+
+# Log files
+*.log
+gameboy-doctor.log
