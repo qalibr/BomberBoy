@@ -5,54 +5,27 @@ namespace BomberBoy.src.PAK;
 
 public class Pak : Rom
 {
-    public byte[] data = null!;
-    private string _filename = null!;
-    public IMbc mbc { get; private set; } = null!;
+    public byte[] data { get; }
+    private readonly string _filename;
+    public IMbc mbc { get; }
 
     public static Pak CreateCartridge(string path)
     {
-        var pak = new Pak();
-        pak.LoadRom(path);
-        pak.InitMbc();
-        return pak;
+        return new Pak(path);
     }
 
-    private void LoadRom(string rom)
+    private Pak(string romPath)
     {
-        try
-        {
-            RomTypes();
-            LicenseCodes();
+        _filename = romPath;
+        data = File.ReadAllBytes(romPath);
 
-            _filename = rom;
-            data = File.ReadAllBytes(rom);
+        ParseRomHeader();
 
-            ParseRomData();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Failed to load ROM file: {rom}. Error: {ex.Message}");
-        }
+        mbc = Mbc.CreateMbc(this, GetEramSize());
     }
 
-    private void InitMbc()
+    private void ParseRomHeader()
     {
-        try
-        {
-            int eramSize = GetEramSize();
-            mbc = Mbc.CreateMbc(this, eramSize);
-            Console.WriteLine("MBC successfully loaded.");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Failed to initialize MBC. Error: {ex.Message}");
-        }
-    }
-
-    private void ParseRomData()
-    {
-        entry = new byte[0x4];
-        logo = new byte[0x30];
         title = Encoding.ASCII.GetString(data, 0x134, 0x10).TrimEnd('\0');
         type = data[0x147];
         newLicense = BitConverter.ToUInt16(data, 0x144);
@@ -73,10 +46,16 @@ public class Pak : Rom
     {
         Console.WriteLine($"Rom Loaded: {_filename}");
         Console.WriteLine($"\tTitle:        {title}");
-        Console.WriteLine($"\tType:         {type:X2} ({romTypes[type]})");
+
+        string typeString = RomTypes.TryGetValue(type, out var T) ? T : "Unknown";
+        Console.WriteLine($"\tType:         {type:X2} ({typeString})");
+
         Console.WriteLine($"\tROM Size:     {32 << romSize} KB");
         Console.WriteLine($"\tRAM Size:     {ramSize:X2}");
-        Console.WriteLine($"\tLicense Code: {license:X2} ({licenseCodes[license]})");
+
+        string licenseString = LicenseCodes.TryGetValue(license, out var L) ? L : "Unknown";
+        Console.WriteLine($"\tLicense Code: {license:X2} ({licenseString})");
+
         Console.WriteLine($"\tROM Version:  {version:X2}");
     }
 

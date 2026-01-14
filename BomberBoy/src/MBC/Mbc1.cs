@@ -32,15 +32,15 @@ public class Mbc1 : IMbc
         return _pak.data[(ROM_OFFSET * _romBank) + (addr & 0x3FFF)];
     }
 
-    public void WriteRom(ushort addr, byte val)
+    public void WriteRom(ushort addr, byte value)
     {
         switch (addr)
         {
             case < 0x2000:
-                _eramEnabled = val == 0x0A;
+                _eramEnabled = value == 0x0A;
                 break;
             case < 0x4000:
-                _romBank = val & 0x1F;
+                _romBank = value & 0x1F;
                 if (_romBank == 0x00 || _romBank == 0x20 || _romBank == 0x40 || _romBank == 0x60)
                 {
                     _romBank++;
@@ -49,7 +49,7 @@ public class Mbc1 : IMbc
             case < 0x6000:
                 if (_bankingMode == 0)
                 {
-                    _romBank |= val & 0x3;
+                    _romBank |= value & 0x3;
                     if (_romBank == 0x00 || _romBank == 0x20 || _romBank == 0x40 || _romBank == 0x60)
                     {
                         _romBank++;
@@ -57,11 +57,11 @@ public class Mbc1 : IMbc
                 }
                 else
                 {
-                    _ramBank = val & 0x3;
+                    _ramBank = value & 0x3;
                 }
                 break;
             case < 0x8000:
-                _bankingMode = val & 0x1;
+                _bankingMode = value & 0x1;
                 break;
         }
     }
@@ -71,11 +71,11 @@ public class Mbc1 : IMbc
         return _eramEnabled ? _eram[(ERAM_OFFSET * _ramBank) + (addr & 0x1FFF)] : (byte)0xFF;
     }
 
-    public void WriteEram(ushort addr, byte val)
+    public void WriteEram(ushort addr, byte value)
     {
         if (_eramEnabled)
         {
-            _eram[(ERAM_OFFSET * _ramBank) + (addr & 0x1FFF)] = val;
+            _eram[(ERAM_OFFSET * _ramBank) + (addr & 0x1FFF)] = value;
         }
     }
 }

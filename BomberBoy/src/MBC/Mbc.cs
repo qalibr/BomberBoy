@@ -14,6 +14,12 @@ public static class Mbc
             case 0x02:
             case 0x03:
                 return new Mbc1(pak, eramSize);
+            case 0x0F:
+            case 0x10:
+            case 0x11:
+            case 0x12:
+            case 0x13:
+                return new Mbc3(pak, eramSize);
             default:
                 throw new NotSupportedException($"MBC type {pak.data[0x147]:X2} is not supported.");
         }

@@ -21,7 +21,7 @@ public class Mbc0 : IMbc
         return _pak.data[addr];
     }
 
-    public void WriteRom(ushort addr, byte val)
+    public void WriteRom(ushort addr, byte value)
     {
         // Ignore writes on MBC0.
     }
@@ -31,7 +31,7 @@ public class Mbc0 : IMbc
         return 0xFF; // No ERAM.
     }
 
-    public void WriteEram(ushort addr, byte val)
+    public void WriteEram(ushort addr, byte value)
     {
         // Ignore writes on MBC0.
     }

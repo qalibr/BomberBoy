@@ -26,6 +26,7 @@
                 // "${workspaceFolder}/BomberBoy/roms/halt_bug.gb"                  // N/A - Immediate crash
                 "${workspaceFolder}/BomberBoy/roms/dmg-acid2.gb" // Passed
                 // "${workspaceFolder}/BomberBoy/roms/mem_timing.gb"                // Passed
+                // "${workspaceFolder}/BomberBoy/roms/.gb" // Nintendo ROM
             ],
             "cwd": "${workspaceFolder}",
             "console": "internalConsole"
