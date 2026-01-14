@@ -3,6 +3,7 @@
 Written in C#, this emulator passes dmg-acid2 and most Blargg tests.
 
 <img src="./img/dmg-acid2.png" alt="drawing" style="width:400px;"/>
+<img src="./img/pkmn-red.png" alt="drawing" style="width:400px;"/>
 
 ## Building and Running
 
@@ -44,15 +45,18 @@ dotnet run --project BomberBoy/BomberBoy.csproj -- path/to/your/rom.gb
 ## Features
 
 | Feature              | Status         | Notes                                                     |
-| -------------------- | :------------: | -----------------------------------------------------     |
-| CPU Core             |       ✅       | Passes Blargg's `cpu_instrs` and `instr_timing` tests.    |
-| PPU (Video)          |       🟡       | Passes `dmg-acid2`, but fails `oam_bug`.                  |
+| -------------------- | :------------: | --------------------------------------------------------- |
+| **Core**             |                |                                                           |
+| CPU                  |       ✅       | Passes Blargg's `cpu_instrs` and `instr_timing` tests.    |
 | Timer                |       ✅       | Implemented with correct `DIV` and `TIMA` logic.          |
-| Sound (APU)          |       ❌       | No sound hardware emulation yet.                          |
+| **Hardware**         |                |                                                           |
+| PPU (Video)          |       🟡       | Passes `dmg-acid2`, but fails `oam_bug`.                  |
+| APU (Sound)          |       ❌       | No sound hardware emulation yet.                          |
 | Joypad Input         |       ❌       | No user input is handled.                                 |
-| MBC1 Support         |       ✅       | Basic memory bank controller is functional.               |
-| Additional MBCs      |       ❌       | Support for MBC2, MBC3, MBC5, etc. is not implemented.    |
+| **Cartridge**        |                |                                                           |
+| MBC Support          |       🟡       | MBC1 & MBC3 (with RTC) supported. Others not yet.         |
 | Save States          |       ❌       | Ability to save/load game progress not implemented.       |
+| **Emulator**         |                |                                                           |
 | GUI / Frontend       |       🟡       | Basic window via Raylib-cs. No menus or options.          |
 | Debugging Tools      |       🟡       | Basic logging to console/file is available.               |
 | CGB Support          |       ❌       | Emulator is currently DMG-only.                           |
