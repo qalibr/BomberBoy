@@ -96,7 +96,7 @@ public class Emulator
                     if (!_cpu.Step())
                     {
                         // _cpu.Step() returns false on termination, which also sets _cpu.terminate.
-                        // The outer loop will catch this and exit gracefully.
+                        // The outer loop will catch this and exit.
                         break;
                     }
                 }
@@ -154,10 +154,8 @@ public class Emulator
             using var stream = new FileStream(path, FileMode.Create);
             using var writer = new BinaryWriter(stream);
 
-            // Emulator state
             writer.Write(total_t_cycles);
 
-            // Component states
             _cpu.SaveState(writer);
             _mmu.SaveState(writer);
             _ppu.SaveState(writer);

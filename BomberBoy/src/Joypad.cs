@@ -15,9 +15,6 @@ using Raylib_cs;
 
     START:          F
     SELECT:         Z
-
-    SAVE STATE:     CTRL + T
-    RESTORE STATE:  CTRL + L
 */
 namespace BomberBoy.src;
 
@@ -83,27 +80,22 @@ public class Joypad
         }
     }
 
-    /// <summary>
-    /// Polls keyboard for input and updates button states.
-    /// Requests a Joypad interrupt if a button is pressed.
-    /// </summary>
+    // Polls keyboard for input and updates button states.
+    // Requests a Joypad interrupt if a button is pressed.
     public void HandleInput()
     {
         // Store previous state to detect changes
         bool prev_up = _up, prev_down = _down, prev_left = _left, prev_right = _right;
         bool prev_a = _a, prev_b = _b, prev_start = _start, prev_select = _select;
 
-        // D-PAD
         _up = Raylib.IsKeyDown(KeyboardKey.W);
         _down = Raylib.IsKeyDown(KeyboardKey.S);
         _left = Raylib.IsKeyDown(KeyboardKey.A);
         _right = Raylib.IsKeyDown(KeyboardKey.D);
 
-        // Action buttons
         _a = Raylib.IsKeyDown(KeyboardKey.E);
         _b = Raylib.IsKeyDown(KeyboardKey.R);
 
-        // Start/Select
         _start = Raylib.IsKeyDown(KeyboardKey.F);
         _select = Raylib.IsKeyDown(KeyboardKey.Z);
 
