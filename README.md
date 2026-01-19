@@ -30,6 +30,21 @@ Pass the path to a Game Boy ROM as a command-line argument.
 dotnet run --project BomberBoy/BomberBoy.csproj -- path/to/your/rom.gb
 ```
 
+## Keymap
+
+| Action        | Key           |
+| ------------- | ------------- |
+| D-Pad Up      | `W`           |
+| D-Pad Down    | `S`           |
+| D-Pad Left    | `A`           |
+| D-Pad Right   | `D`           |
+| A Button      | `E`           |
+| B Button      | `R`           |
+| Start         | `F`           |
+| Select        | `Z`           |
+| Save State    | `CTRL` + `T`  |
+| Restore State | `CTRL` + `L`  |
+
 ## Test ROMs Status
 
 | Test ROM                  | Status |
@@ -52,14 +67,12 @@ dotnet run --project BomberBoy/BomberBoy.csproj -- path/to/your/rom.gb
 | **Hardware**         |                |                                                           |
 | PPU (Video)          |       🟡       | Passes `dmg-acid2`, but fails `oam_bug`.                  |
 | APU (Sound)          |       ❌       | No sound hardware emulation yet.                          |
-| Joypad Input         |       ❌       | No user input is handled.                                 |
+| Joypad Input         |       ✅       | Handles user input.                                       |
 | **Cartridge**        |                |                                                           |
 | MBC Support          |       🟡       | MBC1 & MBC3 (with RTC) supported. Others not yet.         |
-| Save States          |       ❌       | Ability to save/load game progress not implemented.       |
+| Save States          |       ✅       | Ability to save/load game progress.                       |
 | **Emulator**         |                |                                                           |
 | GUI / Frontend       |       🟡       | Basic window via Raylib-cs. No menus or options.          |
-| Debugging Tools      |       🟡       | Basic logging to console/file is available.               |
-| CGB Support          |       ❌       | Emulator is currently DMG-only.                           |
 
 ## Resoures
 

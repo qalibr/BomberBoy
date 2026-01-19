@@ -1,11 +1,12 @@
-## See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
-
 # Notes
 notes.md
 
 # Nintendo ROMs
 *pokemon*.gb
 *pocket*.gb
+
+# Save files
+BomberBoy/states/
 
 # User-specific files
 *.user

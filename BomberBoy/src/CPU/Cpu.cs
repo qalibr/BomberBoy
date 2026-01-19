@@ -124,6 +124,18 @@ public class Cpu
         return true;
     }
 
+    public void SaveState(BinaryWriter writer)
+    {
+        writer.Write(IME);
+        writer.Write(halted);
+    }
+
+    public void LoadState(BinaryReader reader)
+    {
+        IME = reader.ReadBoolean();
+        halted = reader.ReadBoolean();
+    }
+
     // ----------------------------------------------------------------------------------
     // ----------------------------------------------------------------------------------
     // ----------------------------------------------------------------------------------

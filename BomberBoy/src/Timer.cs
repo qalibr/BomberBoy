@@ -64,4 +64,16 @@ public class Timer
         0x03 => 256,  // 16384 Hz  (4194304 / 16384)
         _ => throw new ArgumentOutOfRangeException(nameof(tac), "Invalid TAC value")
     };
+
+    public void SaveState(BinaryWriter writer)
+    {
+        writer.Write(_internalCounter);
+        writer.Write(_timaCounter);
+    }
+
+    public void LoadState(BinaryReader reader)
+    {
+        _internalCounter = reader.ReadUInt16();
+        _timaCounter = reader.ReadInt32();
+    }
 }

@@ -9,4 +9,7 @@ public interface IMbc
 
     public byte ReadEram(ushort addr);
     public void WriteEram(ushort addr, byte val);
+
+    public void SaveState(BinaryWriter writer);
+    public void LoadState(BinaryReader reader);
 }

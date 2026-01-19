@@ -189,4 +189,58 @@ public class Mbc3 : IMbc
             _rtc_DH |= 0x80; // Set carry bit
         }
     }
+
+    public void SaveState(BinaryWriter writer)
+    {
+        if (_eram.Length > 0)
+        {
+            writer.Write(_eram);
+        }
+        writer.Write(_eramEnabled);
+        writer.Write(_romBank);
+        writer.Write(_ramBankOrRtcReg);
+        writer.Write(_latchSequenceState);
+
+        writer.Write(_rtc_S);
+        writer.Write(_rtc_M);
+        writer.Write(_rtc_H);
+        writer.Write(_rtc_DL);
+        writer.Write(_rtc_DH);
+
+        writer.Write(_latched_S);
+        writer.Write(_latched_M);
+        writer.Write(_latched_H);
+        writer.Write(_latched_DL);
+        writer.Write(_latched_DH);
+
+        // Save the base time for RTC calculation
+        writer.Write(_lastRtcUpdate.ToBinary());
+    }
+
+    public void LoadState(BinaryReader reader)
+    {
+        if (_eram.Length > 0)
+        {
+            reader.BaseStream.ReadExactly(_eram);
+        }
+        _eramEnabled = reader.ReadBoolean();
+        _romBank = reader.ReadInt32();
+        _ramBankOrRtcReg = reader.ReadInt32();
+        _latchSequenceState = reader.ReadByte();
+
+        _rtc_S = reader.ReadByte();
+        _rtc_M = reader.ReadByte();
+        _rtc_H = reader.ReadByte();
+        _rtc_DL = reader.ReadByte();
+        _rtc_DH = reader.ReadByte();
+
+        _latched_S = reader.ReadByte();
+        _latched_M = reader.ReadByte();
+        _latched_H = reader.ReadByte();
+        _latched_DL = reader.ReadByte();
+        _latched_DH = reader.ReadByte();
+
+        // Restore the base time for RTC calculation
+        _lastRtcUpdate = DateTime.FromBinary(reader.ReadInt64());
+    }
 }

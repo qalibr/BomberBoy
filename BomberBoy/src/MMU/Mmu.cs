@@ -8,6 +8,7 @@ public class Mmu : Ram
     private readonly IMbc _mbc;
     private Ppu? _ppu;
     private Timer? _timer;
+    private Joypad _joypad = null!;
 
     private bool _dmaActive = false;
     private int _dmaCyclesLeft = 0;
@@ -31,6 +32,11 @@ public class Mmu : Ram
         _ppu = ppu;
     }
 
+    public void ConnectJoypad(Joypad joypad)
+    {
+        _joypad = joypad;
+    }
+
     public byte ReadByte(ushort addr)
     {
         // Gameboy Doctor stub
@@ -38,6 +44,11 @@ public class Mmu : Ram
         // {
         //     return 0x90;
         // }
+
+        if (addr == 0xFF00) // JOYPAD
+        {
+            return _joypad.P1;
+        }
 
         // DMA LOCK: CPU can only access HRAM (0xFF80-0xFFFF) during DMA.
         if (_dmaActive && addr < 0xFF80)
@@ -82,8 +93,14 @@ public class Mmu : Ram
         }
     }
 
-    public void WriteByte(ushort addr, byte val)
+    public void WriteByte(ushort addr, byte value)
     {
+        if (addr == 0xFF00) // JOYPAD
+        {
+            _joypad.P1 = value;
+            return;
+        }
+
         // DMA LOCK: CPU writes are ignored for everything except HRAM during DMA.
         if (_dmaActive && addr < 0xFF80)
         {
@@ -93,7 +110,7 @@ public class Mmu : Ram
         switch (addr)
         {
             case <= 0x7FFF:
-                _mbc.WriteRom(addr, val);
+                _mbc.WriteRom(addr, value);
                 break;
             // VRAM is inaccessible during Mode 3 (Drawing)
             case <= 0x9FFF:
@@ -102,16 +119,16 @@ public class Mmu : Ram
                     if (_debugging) throw new InvalidOperationException($"[DEBUG] Illegal VRAM write access during PPU Mode 3 at address {addr:X4}.");
                     break;
                 }
-                WriteVram(addr, val);
+                WriteVram(addr, value);
                 break;
             case <= 0xBFFF:
-                _mbc.WriteEram(addr, val);
+                _mbc.WriteEram(addr, value);
                 break;
             case <= 0xDFFF:
-                WriteWram(addr, val);
+                WriteWram(addr, value);
                 break;
             case <= 0xFDFF:
-                WriteWram((ushort)(addr - 0x2000), val);
+                WriteWram((ushort)(addr - 0x2000), value);
                 break;
             // OAM is inaccessible during Mode 2 (OAM Scan) and Mode 3 (Drawing)
             case <= 0xFE9F:
@@ -120,7 +137,7 @@ public class Mmu : Ram
                     if (_debugging) throw new InvalidOperationException($"[DEBUG] Illegal OAM write access during PPU Mode {_ppu.CurrentMode} at address {addr:X4}.");
                     break;
                 }
-                WriteOam(addr, val);
+                WriteOam(addr, value);
                 break;
             case <= 0xFEFF:
                 // Unused
@@ -132,12 +149,12 @@ public class Mmu : Ram
             case 0xFF46: // DMA Transfer
                 _dmaActive = true;
                 _dmaCyclesLeft = 640; // 160 bytes * 4 cycles
-                _dmaSourceAddr = (ushort)(val << 8); break;
+                _dmaSourceAddr = (ushort)(value << 8); break;
             case <= 0xFF7F:
-                WriteIo(addr, val);
+                WriteIo(addr, value);
                 break;
             case <= 0xFFFF:
-                WriteHram(addr, val);
+                WriteHram(addr, value);
                 break;
         }
     }
@@ -294,5 +311,23 @@ public class Mmu : Ram
     {
         get => Io[75]; // 0xFF4B - 0xFF00
         set => Io[75] = value;
+    }
+
+    public void SaveState(BinaryWriter writer)
+    {
+        writer.Write(Wram);
+        writer.Write(Io);
+        writer.Write(Hram);
+        writer.Write(Vram);
+        writer.Write(Oam);
+    }
+
+    public void LoadState(BinaryReader reader)
+    {
+        reader.BaseStream.ReadExactly(Wram);
+        reader.BaseStream.ReadExactly(Io);
+        reader.BaseStream.ReadExactly(Hram);
+        reader.BaseStream.ReadExactly(Vram);
+        reader.BaseStream.ReadExactly(Oam);
     }
 }

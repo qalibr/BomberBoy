@@ -35,4 +35,8 @@ public class Mbc0 : IMbc
     {
         // Ignore writes on MBC0.
     }
+
+    public void SaveState(BinaryWriter writer) { }
+
+    public void LoadState(BinaryReader reader) { }
 }

@@ -11,12 +11,14 @@ public class Screen
     private const int SCALE = 3;
 
     private readonly Ppu _ppu;
+    private readonly Joypad _joypad;
     private readonly Texture2D _texture; // Texture that can be updated from framebuffer data.
     private readonly Image _image;
 
-    public Screen(Ppu ppu)
+    public Screen(Ppu ppu, Joypad joypad)
     {
         _ppu = ppu;
+        _joypad = joypad;
         Raylib.SetTraceLogLevel(TraceLogLevel.Error);
         Raylib.InitWindow(SCREEN_WIDTH * SCALE, SCREEN_HEIGHT * SCALE, "BomberBoy GB Emulator");
         Raylib.SetTargetFPS(60);
@@ -43,7 +45,7 @@ public class Screen
 
     public void HandleEvents()
     {
-        // TODO event key inputs
+        _joypad.HandleInput();
     }
 
     public bool ShouldClose()

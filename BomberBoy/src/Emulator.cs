@@ -2,6 +2,8 @@ using BomberBoy.src.CPU;
 using BomberBoy.src.PAK;
 using BomberBoy.src.MMU;
 using BomberBoy.src.PPU;
+using System.IO;
+using Raylib_cs;
 
 namespace BomberBoy.src;
 
@@ -15,7 +17,9 @@ public class Emulator
     private readonly Timer _timer;
     private readonly Ppu _ppu;
     private readonly Screen _screen;
+    private readonly Joypad _joypad;
 
+    private readonly string _romName;
     private readonly StreamWriter? _logStream;
     private readonly bool _debugging;
 
@@ -24,6 +28,7 @@ public class Emulator
     public Emulator(string romPath, bool debuggingEnabled = false, long consoleLogTarget = -1, uint consoleLogRadius = 5)
     {
         _debugging = debuggingEnabled;
+        _romName = Path.GetFileNameWithoutExtension(romPath);
 
         try
         {
@@ -51,11 +56,14 @@ public class Emulator
 
         _mmu = new Mmu(_pak.mbc, _debugging);
         _interrupt = new Interrupts(this, _mmu, _registers, _debugging);
+        _joypad = new Joypad(_interrupt);
+        _mmu.ConnectJoypad(_joypad);
+        _joypad.ConnectMmu(_mmu);
         _timer = new Timer(_interrupt, _mmu);
         _mmu.ConnectTimer(_timer);
         _ppu = new Ppu(_mmu, _interrupt, _debugging);
         _mmu.ConnectPpu(_ppu);
-        _screen = new Screen(_ppu);
+        _screen = new Screen(_ppu, _joypad);
 
         _cpu = new Cpu(this, _mmu, _registers, _interrupt, _logStream, _debugging, minConsoleLogLines, maxConsoleLogLines);
     }
@@ -95,6 +103,7 @@ public class Emulator
 
                 // We've run enough cycles for one frame.
                 _screen.HandleEvents();
+                HandleSaves();
                 _screen.Update(); // This will draw the PPU's framebuffer to the window.
             }
         }
@@ -108,6 +117,86 @@ public class Emulator
             // Cleanup
             _screen.Terminate();
             _logStream?.Close();
+        }
+    }
+
+    private void HandleSaves()
+    {
+        bool ctrl = Raylib.IsKeyDown(KeyboardKey.LeftControl) || Raylib.IsKeyDown(KeyboardKey.RightControl);
+
+        // CTRL + T
+        if (ctrl && Raylib.IsKeyPressed(KeyboardKey.T))
+        {
+            string savePath = Path.Combine("BomberBoy", "states", $"{_romName}.state");
+            CreateSave(savePath);
+            Console.WriteLine($"State saved to {savePath}.");
+        }
+
+        // CTRL + L
+        if (ctrl && Raylib.IsKeyPressed(KeyboardKey.L))
+        {
+            string savePath = Path.Combine("BomberBoy", "states", $"{_romName}.state");
+            if (LoadSave(savePath))
+                Console.WriteLine("State loaded.");
+        }
+    }
+
+    public void CreateSave(string path)
+    {
+        try
+        {
+            string? directory = Path.GetDirectoryName(path);
+            if (!string.IsNullOrEmpty(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            using var stream = new FileStream(path, FileMode.Create);
+            using var writer = new BinaryWriter(stream);
+
+            // Emulator state
+            writer.Write(total_t_cycles);
+
+            // Component states
+            _cpu.SaveState(writer);
+            _mmu.SaveState(writer);
+            _ppu.SaveState(writer);
+            _timer.SaveState(writer);
+            _interrupt.SaveState(writer);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving state: {ex.Message}");
+        }
+    }
+
+    public bool LoadSave(string path)
+    {
+        if (!File.Exists(path))
+        {
+            Console.WriteLine($"Save file not found: {path}. CTRL + T to create save file.");
+            return false;
+        }
+
+        try
+        {
+            using var stream = new FileStream(path, FileMode.Open);
+            using var reader = new BinaryReader(stream);
+
+            total_t_cycles = reader.ReadInt64();
+
+            _cpu.LoadState(reader);
+            _mmu.LoadState(reader);
+            _ppu.LoadState(reader);
+            _timer.LoadState(reader);
+            _interrupt.LoadState(reader);
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading state: {ex.Message}");
+            return false;
         }
     }
 }

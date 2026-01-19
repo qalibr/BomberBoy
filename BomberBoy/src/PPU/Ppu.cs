@@ -562,4 +562,20 @@ public class Ppu
         // 5. Remember the current signal state for the next tick's rising-edge check.
         _lastStatSignal = currentSignal;
     }
+
+    public void SaveState(BinaryWriter writer)
+    {
+        writer.Write(_scanlineCounter);
+        writer.Write(_windowLineCounter);
+        writer.Write(_mode3ExtraCycles);
+        writer.Write(_lastStatSignal);
+    }
+
+    public void LoadState(BinaryReader reader)
+    {
+        _scanlineCounter = reader.ReadInt32();
+        _windowLineCounter = reader.ReadInt32();
+        _mode3ExtraCycles = reader.ReadInt32();
+        _lastStatSignal = reader.ReadBoolean();
+    }
 }

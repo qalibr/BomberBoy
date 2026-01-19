@@ -76,4 +76,32 @@ public class Registers
         get => (F & 0x10) == 0x10;
         set => F = (byte)(value ? F | 0x10 : F & ~0x10);
     }
+
+    public void SaveState(BinaryWriter writer)
+    {
+        writer.Write(A);
+        writer.Write(F);
+        writer.Write(B);
+        writer.Write(C);
+        writer.Write(D);
+        writer.Write(E);
+        writer.Write(H);
+        writer.Write(L);
+        writer.Write(SP);
+        writer.Write(PC);
+    }
+
+    public void LoadState(BinaryReader reader)
+    {
+        A = reader.ReadByte();
+        F = reader.ReadByte();
+        B = reader.ReadByte();
+        C = reader.ReadByte();
+        D = reader.ReadByte();
+        E = reader.ReadByte();
+        H = reader.ReadByte();
+        L = reader.ReadByte();
+        SP = reader.ReadUInt16();
+        PC = reader.ReadUInt16();
+    }
 }

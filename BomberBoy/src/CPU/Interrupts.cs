@@ -184,4 +184,13 @@ public class Interrupts(Emulator emulator, Mmu mmu, Registers regs, bool debuggi
         return false;
     }
 
+    public void SaveState(BinaryWriter writer)
+    {
+        writer.Write(delayInterruptCheck);
+    }
+
+    public void LoadState(BinaryReader reader)
+    {
+        delayInterruptCheck = reader.ReadBoolean();
+    }
 }

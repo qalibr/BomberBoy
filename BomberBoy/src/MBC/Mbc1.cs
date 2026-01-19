@@ -78,4 +78,26 @@ public class Mbc1 : IMbc
             _eram[(ERAM_OFFSET * _ramBank) + (addr & 0x1FFF)] = value;
         }
     }
+
+    public void SaveState(BinaryWriter writer)
+    {
+        if (_eram.Length > 0)
+        {
+            writer.Write(_eram);
+        }
+        writer.Write(_eramEnabled);
+        writer.Write(_romBank);
+        writer.Write(_bankingMode);
+    }
+
+    public void LoadState(BinaryReader reader)
+    {
+        if (_eram.Length > 0)
+        {
+            reader.BaseStream.ReadExactly(_eram);
+        }
+        _eramEnabled = reader.ReadBoolean();
+        _romBank = reader.ReadInt32();
+        _bankingMode = reader.ReadInt32();
+    }
 }

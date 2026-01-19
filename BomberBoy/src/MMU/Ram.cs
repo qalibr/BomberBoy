@@ -3,7 +3,7 @@ namespace BomberBoy.src.MMU;
 public class Ram
 {
     protected byte[] Wram { get; set; } = new byte[0x2000];     // 0xC000 - 0xDFFF
-    protected byte[] Io { get; set; } = new byte[128];          // 0xFF00 - 0xFF7F
+    internal byte[] Io { get; set; } = new byte[128];          // 0xFF00 - 0xFF7F
     protected byte[] Hram { get; set; } = new byte[128];        // 0xFF80 - 0xFFFF
     protected byte[] Vram { get; set; } = new byte[0x2000];     // 0x8000 - 0x9FFF
     protected byte[] Oam { get; set; } = new byte[0xA0];        // 0xFE00 - 0xFE9F
