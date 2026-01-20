@@ -10,23 +10,25 @@ public class Ppu
     private readonly Mmu _mmu;
     private readonly Interrupts _interrupt;
 
+    // Screen dimensions.
+    public const int SCREEN_WIDTH = 160;
+    public const int SCREEN_HEIGHT = 144;
+
     // Scanline timings in T-cycles.
     private const int OAM_SCAN_CYCLES = 80;
     private const int VRAM_READ_CYCLES = 172;
     private const int HBLANK_CYCLES = 204;
     private const int CYCLES_PER_SCANLINE = OAM_SCAN_CYCLES + VRAM_READ_CYCLES + HBLANK_CYCLES; // 456
 
-    // Screen dimensions.
-    private const int VISIBLE_SCANLINES = 144;
     private const int VBLANK_SCANLINES = 10;
-    private const int TOTAL_SCANLINES = VISIBLE_SCANLINES + VBLANK_SCANLINES; // 154
+    private const int TOTAL_SCANLINES = SCREEN_HEIGHT + VBLANK_SCANLINES; // 154
 
     private int _scanlineCounter = 0;
     private int _windowLineCounter = 0;
     private int _mode3ExtraCycles = 0;
     private readonly List<Sprite> _spriteBuffer = new(10);
     private bool _lastStatSignal = false;
-    public readonly int[] FrameBuffer = new int[Screen.SCREEN_WIDTH * Screen.SCREEN_HEIGHT];
+    public readonly int[] FrameBuffer = new int[SCREEN_WIDTH * SCREEN_HEIGHT];
 
     // These hex values are larger than a signed int can hold, so they are inferred as uint.
     // We must explicitly cast them to int to match the array type.
@@ -35,20 +37,16 @@ public class Ppu
 
     public byte CurrentMode => GetCurrentMode();
 
-    private bool _canLogPpuRead = false;
-    private readonly bool _debugging;
-
-    public Ppu(Mmu mmu, Interrupts interrupt, bool debuggingEnabled = false)
+    public Ppu(Mmu mmu, Interrupts interrupt)
     {
         _mmu = mmu;
         _interrupt = interrupt;
-        _debugging = debuggingEnabled;
     }
 
     // Opting for a scanline based renderer instead of 'Pixel FIFO', the PPU state machine below
     // is driven by the scanline counter. Each scanline takes 456 T-cycles.
     // 
-    // The PPU cycles through modes for each of the 144 visible scanlines:
+    // The PPU cycles through modes for each of the 144 (screen height) visible scanlines:
     // Mode 2 (OAM Scan, 80 cycles): Scans OAM (FE00-FE9F) for up to 10 sprites on the current line.
     // Mode 3 (Drawing, ~172-289 cycles): Reads VRAM to draw the pixels for the scanline. Duration varies.
     // Mode 0 (H-Blank, ~87-204 cycles): Horizontal blanking period. CPU can access VRAM and OAM.
@@ -95,7 +93,7 @@ public class Ppu
                         _scanlineCounter = 0;
                         _mmu.LY++;
 
-                        if (_mmu.LY == VISIBLE_SCANLINES)
+                        if (_mmu.LY == SCREEN_HEIGHT)
                         {
                             // After the last visible scanline is drawn, we enter V-Blank (Mode 1).
                             SetCurrentMode(1);
@@ -141,11 +139,6 @@ public class Ppu
 
     private void RenderScanline()
     {
-        if (_debugging)
-        {
-            Console.WriteLine($"[PPU DEBUG: {GetCurrentMode()}] Rendering scanline LY={_mmu.LY} at scanline counter {_scanlineCounter}");
-        }
-
         // LCDC bit 0 is a master switch for the background and window. If it's off,
         // they are not drawn, effectively becoming transparent (color 0).
         bool bgWindowMasterSwitch = BitFunctions.IsBit(0, _mmu.LCDC);
@@ -157,12 +150,12 @@ public class Ppu
         else // If master switch is off, BG and Window are blank.
         {
             int y = _mmu.LY;
-            int canvasOffset = y * Screen.SCREEN_WIDTH;
+            int canvasOffset = y * SCREEN_WIDTH;
             // "Blank" means filled with color 0 from the BGP palette.
             // Color 0 is not necessarily white, it's the first color in the BGP palette
             int paletteColorId = (_mmu.BGP >> 0) & 0x03;
             int color = _colors[paletteColorId];
-            Array.Fill(FrameBuffer, color, canvasOffset, Screen.SCREEN_WIDTH);
+            Array.Fill(FrameBuffer, color, canvasOffset, SCREEN_WIDTH);
         }
 
         // The window has its own enable bit (LCDC bit 5) and is drawn on top of the background.
@@ -182,12 +175,11 @@ public class Ppu
 
     private void RenderBackgroundLine()
     {
-        EnablePpuReadLogging();
         int y = _mmu.LY;
 
-        int canvasOffset = y * Screen.SCREEN_WIDTH;
+        int canvasOffset = y * SCREEN_WIDTH;
 
-        for (int x = 0; x < Screen.SCREEN_WIDTH; x++)
+        for (int x = 0; x < SCREEN_WIDTH; x++)
         {
             int colorId = GetColorIdFromVram(x, y);
 
@@ -266,8 +258,6 @@ public class Ppu
 
     private void RenderWindowLine()
     {
-        EnablePpuReadLogging();
-
         // The WX register specifies the X position of the window plus 7.
         // To get the actual starting X coordinate, we subtract 7.
         int wx = _mmu.WX - 7; // WX is X-coord + 7
@@ -279,7 +269,7 @@ public class Ppu
 
         int windowY = _windowLineCounter; // The vertical line inside the window's 256x256 pixel map.
 
-        for (int x = 0; x < Screen.SCREEN_WIDTH; x++)
+        for (int x = 0; x < SCREEN_WIDTH; x++)
         {
             if (x < wx) continue; // Is the current screen pixel part of the window?
 
@@ -310,7 +300,7 @@ public class Ppu
             // Map the color ID through the background palette register (BGP)
             int paletteColorId = (_mmu.BGP >> (colorId * 2)) & 0x03;
 
-            int canvasOffset = y * Screen.SCREEN_WIDTH;
+            int canvasOffset = y * SCREEN_WIDTH;
             FrameBuffer[canvasOffset + x] = _colors[paletteColorId];
         }
     }
@@ -373,7 +363,7 @@ public class Ppu
             for (int tilePixel = 0; tilePixel < 8; tilePixel++)
             {
                 int screenX = sprite.X + tilePixel;
-                if (screenX < 0 || screenX >= Screen.SCREEN_WIDTH) continue;
+                if (screenX < 0 || screenX >= SCREEN_WIDTH) continue;
 
                 int colorBit = xFlip ? tilePixel : 7 - tilePixel;
                 int lsb = (data1 >> colorBit) & 1;
@@ -382,7 +372,7 @@ public class Ppu
 
                 if (IsTransparent(colorId)) continue;
 
-                int canvasOffset = scanline * Screen.SCREEN_WIDTH;
+                int canvasOffset = scanline * SCREEN_WIDTH;
 
                 // BG-to-OBJ Priority (Bit 7 of attributes)
                 // If this bit is 1, the sprite pixel is only drawn if the background
@@ -435,9 +425,9 @@ public class Ppu
             }
         }
 
-        // On original hardware (DMG), sprite priority is determined first by the
-        // X-coordinate (smaller X has higher priority). If X-coordinates are equal,
-        // the sprite that appears earlier in OAM (lower index) has higher priority.
+        // Sprite priority is determined first by the X-coordinate (smaller X has higher priority).
+        // If X-coordinates are equal, the sprite that appears earlier in OAM (lower index) 
+        // has higher priority.
         _spriteBuffer.Sort((s1, s2) =>
         {
             int xCompare = s1.X.CompareTo(s2.X);
@@ -448,26 +438,7 @@ public class Ppu
     private byte PpuReadByte(ushort addr)
     {
         byte data = _mmu.ReadByte(addr);
-        if (_debugging && _canLogPpuRead)
-        {
-            _canLogPpuRead = false; // Throttle subsequent reads until re-enabled
-            string memoryRegion = addr switch
-            {
-                >= 0x8000 and <= 0x9FFF => "VRAM",
-                >= 0xFE00 and <= 0xFE9F => "OAM",
-                _ => "IO/Other"
-            };
-            Console.WriteLine($"[PPU DEBUG: {GetCurrentMode()}] Starting read from {memoryRegion} at 0x{addr:X4}, got 0x{data:X2}");
-        }
         return data;
-    }
-
-    private void EnablePpuReadLogging()
-    {
-        if (_debugging)
-        {
-            _canLogPpuRead = true;
-        }
     }
 
     private int SpriteSize()

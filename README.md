@@ -72,6 +72,7 @@ dotnet run --project BomberBoy/BomberBoy.csproj -- path/to/your/rom.gb
 | MBC Support          |       🟡       | MBC1 & MBC3 (with RTC) supported. Others not yet.         |
 | Save States          |       ✅       | Ability to save/load game progress.                       |
 | **Emulator**         |                |                                                           |
+| Drag & Drop          |       ✅       | (Can still run directly with CLI args.)                   |
 | GUI / Frontend       |       🟡       | Basic window via Raylib-cs. No menus or options.          |
 
 ## Resoures

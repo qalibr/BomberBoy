@@ -7,27 +7,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             "program": "${workspaceFolder}/BomberBoy/bin/Debug/net9.0/BomberBoy.dll",
-            "args": [
-                // "${workspaceFolder}/BomberBoy/roms/01-special.gb"                // Passed
-                // "${workspaceFolder}/BomberBoy/roms/02-interrupts.gb"             // Passed
-                // "${workspaceFolder}/BomberBoy/roms/03-op sp,hl.gb"               // Passed
-                // "${workspaceFolder}/BomberBoy/roms/04-op r,imm.gb"               // Passed
-                // "${workspaceFolder}/BomberBoy/roms/05-op rp.gb"                  // Passed
-                // "${workspaceFolder}/BomberBoy/roms/06-ld r,r.gb"                 // Passed
-                // "${workspaceFolder}/BomberBoy/roms/07-jr,jp,call,ret,rst.gb"     // Passed
-                // "${workspaceFolder}/BomberBoy/roms/08-misc instrs.gb"            // Passed
-                // "${workspaceFolder}/BomberBoy/roms/09-op r,r.gb"                 // Passed
-                // "${workspaceFolder}/BomberBoy/roms/10-bit ops.gb"                // Passed
-                // "${workspaceFolder}/BomberBoy/roms/11-op a,(hl).gb"              // Passed
-                // "${workspaceFolder}/BomberBoy/roms/cpu_instrs.gb"                // Passed
-                // "${workspaceFolder}/BomberBoy/roms/instr_timing.gb"              // Passed
-                // "${workspaceFolder}/BomberBoy/roms/interrupt_time.gb"            // N/A - Immediate crash
-                // "${workspaceFolder}/BomberBoy/roms/oam_bug.gb"                   // X - Failed
-                // "${workspaceFolder}/BomberBoy/roms/halt_bug.gb"                  // N/A - Immediate crash
-                "${workspaceFolder}/BomberBoy/roms/dmg-acid2.gb" // Passed
-                // "${workspaceFolder}/BomberBoy/roms/mem_timing.gb"                // Passed
-                // "${workspaceFolder}/BomberBoy/roms/.gb" // Nintendo ROM
-            ],
+            "args": [],
             "cwd": "${workspaceFolder}",
             "console": "internalConsole"
         }

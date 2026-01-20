@@ -14,12 +14,9 @@ public class Mmu : Ram
     private int _dmaCyclesLeft = 0;
     private ushort _dmaSourceAddr = 0;
 
-    private readonly bool _debugging;
-
-    public Mmu(IMbc mbc, bool debuggingEnabled = false)
+    public Mmu(IMbc mbc)
     {
         _mbc = mbc;
-        _debugging = debuggingEnabled;
     }
 
     public void ConnectTimer(Timer timer)
@@ -66,7 +63,6 @@ public class Mmu : Ram
             case <= 0x9FFF:
                 if (_ppu?.CurrentMode == 3)
                 {
-                    if (_debugging) throw new InvalidOperationException($"[DEBUG] Illegal VRAM read access during PPU Mode 3 at address {addr:X4}.");
                     return 0xFF;
                 }
                 return ReadVram(addr);
@@ -80,7 +76,6 @@ public class Mmu : Ram
             case <= 0xFE9F:
                 if (_ppu?.CurrentMode is 2 or 3)
                 {
-                    if (_debugging) throw new InvalidOperationException($"[DEBUG] Illegal OAM read access during PPU Mode {_ppu.CurrentMode} at address {addr:X4}.");
                     return 0xFF;
                 }
                 return ReadOam(addr);
@@ -116,7 +111,6 @@ public class Mmu : Ram
             case <= 0x9FFF:
                 if (_ppu?.CurrentMode == 3)
                 {
-                    if (_debugging) throw new InvalidOperationException($"[DEBUG] Illegal VRAM write access during PPU Mode 3 at address {addr:X4}.");
                     break;
                 }
                 WriteVram(addr, value);
@@ -134,7 +128,6 @@ public class Mmu : Ram
             case <= 0xFE9F:
                 if (_ppu?.CurrentMode is 2 or 3)
                 {
-                    if (_debugging) throw new InvalidOperationException($"[DEBUG] Illegal OAM write access during PPU Mode {_ppu.CurrentMode} at address {addr:X4}.");
                     break;
                 }
                 WriteOam(addr, value);

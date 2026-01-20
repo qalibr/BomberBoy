@@ -10,7 +10,6 @@ public class Cpu
     private readonly Mmu _mmu;
     private readonly Registers _register;
     private readonly Interrupts _interrupt;
-    // private readonly GBDoctor? _gbDoctor;
 
     public ushort previousPc;
     public byte opcode;
@@ -21,25 +20,12 @@ public class Cpu
     public int imeCountdown = 0;
     public bool terminate = false;
 
-    // private readonly bool _debugging;
-
-    public Cpu(Emulator emulator,
-        Mmu mmu, Registers register,
-        Interrupts interrupt,
-        StreamWriter? logStream = null,
-        bool debuggingEnabled = false,
-        long minConsoleLogLines = 0,
-        long maxConsoleLogLines = long.MaxValue)
+    public Cpu(Emulator emulator, Mmu mmu, Registers register, Interrupts interrupt)
     {
         _emulator = emulator;
         _mmu = mmu;
         _register = register;
         _interrupt = interrupt;
-        // _debugging = debuggingEnabled;
-        // if (_debugging && logStream != null)
-        // {
-        //     _gbDoctor = new GBDoctor(logStream, minConsoleLogLines, maxConsoleLogLines);
-        // }
 
         register.AF = 0x01B0;
         register.BC = 0x0013;
@@ -77,10 +63,6 @@ public class Cpu
         {
             if ((_mmu.IF & _mmu.IE & 0x1F) != 0) // Is there a pending interrupt?
             {
-                // if (_debugging)
-                // {
-                //     Console.WriteLine("[DEBUG] EI bug triggered: enabling IME early due to pending interrupt.");
-                // }
                 IME = true;
                 imeCountdown = 0; // Cancel normal countdown.
             }
@@ -88,20 +70,12 @@ public class Cpu
 
         if (imeCountdown > 0 && --imeCountdown == 0)
         {
-            // if (_debugging)
-            // {
-            //     Console.WriteLine("[DEBUG] IME enabled via EI instruction countdown.");
-            // }
             IME = true;
         }
 
         // Check for interrupts. If one is serviced, it consumes this entire step, preempting the normal fetch-execute cycle.
         if (_interrupt.HandleInterrupts(ref halted, ref IME))
         {
-            // if (_debugging)
-            // {
-            //     Console.WriteLine("[DEBUG] Step consumed by interrupt service routine.");
-            // }
             return true;
         }
 
@@ -111,13 +85,9 @@ public class Cpu
         }
         else
         {
-            // _gbDoctor?.Log(_register, _mmu, ref terminate);
             if (terminate) return false;
 
             Fetch();
-
-            // _gbDoctor?.Print(_mmu, ref previousPc, ref opcode);
-
             Execute();
         }
 
@@ -620,18 +590,10 @@ public class Cpu
                         // Trick the next Fetch() to reuse the current PC.
                         halted = false;
                         haltBug = true;
-                        // if (_debugging)
-                        // {
-                        //     Console.WriteLine("[DEBUG] HALT bug triggered. CPU will not halt.");
-                        // }
                     }
                     else
                     {
                         halted = true;
-                        // if (_debugging)
-                        // {
-                        //     Console.WriteLine("[DEBUG] HALT instruction executed. CPU halted.");
-                        // }
                     }
                 }
                 break;
@@ -743,10 +705,6 @@ public class Cpu
                 _register.PC = Pop();
                 MachineCycles(1);
                 IME = true;
-                // if (_debugging)
-                // {
-                //     Console.WriteLine($"[DEBUG] RETI executed. IME enabled. PC restored to {_register.PC:X4}.");
-                // }
                 break;
             case 0xDA: Jp(_register.cFlag); break;
             case 0xDB: break;
@@ -795,10 +753,6 @@ public class Cpu
             case 0xF1: _register.AF = Pop(); break;
             case 0xF2: _register.A = _mmu.ReadByte((ushort)(0xFF00 + _register.C)); MachineCycles(1); break;
             case 0xF3: // DI
-                // if (_debugging)
-                // {
-                //     Console.WriteLine("[DEBUG] DI instruction executed. IME disabled.");
-                // }
                 IME = false;
                 imeCountdown = 0;
                 break;
@@ -821,10 +775,6 @@ public class Cpu
             case 0xF9: _register.SP = _register.HL; MachineCycles(1); break;
             case 0xFA: { ushort addr = ReadImmediate16(); _register.A = _mmu.ReadByte(addr); MachineCycles(1); } break;
             case 0xFB: // EI
-                // if (_debugging)
-                // {
-                //     Console.WriteLine("[DEBUG] EI instruction executed. IME will be enabled after next instruction.");
-                // }
                 imeCountdown = 2;
                 break;
             case 0xFC: break;

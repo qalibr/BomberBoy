@@ -2,7 +2,6 @@ using BomberBoy.src.CPU;
 using BomberBoy.src.PAK;
 using BomberBoy.src.MMU;
 using BomberBoy.src.PPU;
-using System.IO;
 using Raylib_cs;
 
 namespace BomberBoy.src;
@@ -15,57 +14,30 @@ public class Emulator
     private readonly Mmu _mmu;
     private readonly Interrupts _interrupt;
     private readonly Timer _timer;
-    private readonly Ppu _ppu;
-    private readonly Screen _screen;
-    private readonly Joypad _joypad;
+    public Ppu Ppu { get; }
+    public Joypad Joypad { get; }
 
     private readonly string _romName;
-    private readonly StreamWriter? _logStream;
-    private readonly bool _debugging;
 
     public long total_t_cycles = 0;
 
-    public Emulator(string romPath, bool debuggingEnabled = false, long consoleLogTarget = -1, uint consoleLogRadius = 5)
+    public Emulator(string romPath)
     {
-        _debugging = debuggingEnabled;
         _romName = Path.GetFileNameWithoutExtension(romPath);
 
-        try
-        {
-            _pak = Pak.CreateCartridge(romPath);
-            if (_debugging)
-            {
-                _logStream = new StreamWriter("gameboy-doctor.log");
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Failed to load ROM file: {romPath}");
-            Console.WriteLine($"Error: {ex.Message}");
-            Environment.Exit(1);
-        }
+        _pak = Pak.CreateCartridge(romPath);
 
-        long minConsoleLogLines = 0;
-        long maxConsoleLogLines = long.MaxValue;
-
-        if (_debugging && consoleLogTarget >= 0)
-        {
-            minConsoleLogLines = Math.Max(0, consoleLogTarget - consoleLogRadius);
-            maxConsoleLogLines = consoleLogTarget + consoleLogRadius;
-        }
-
-        _mmu = new Mmu(_pak.mbc, _debugging);
-        _interrupt = new Interrupts(this, _mmu, _registers, _debugging);
-        _joypad = new Joypad(_interrupt);
-        _mmu.ConnectJoypad(_joypad);
-        _joypad.ConnectMmu(_mmu);
+        _mmu = new Mmu(_pak.mbc);
+        _interrupt = new Interrupts(this, _mmu, _registers);
+        Joypad = new Joypad(_interrupt);
+        _mmu.ConnectJoypad(Joypad);
+        Joypad.ConnectMmu(_mmu);
         _timer = new Timer(_interrupt, _mmu);
         _mmu.ConnectTimer(_timer);
-        _ppu = new Ppu(_mmu, _interrupt, _debugging);
-        _mmu.ConnectPpu(_ppu);
-        _screen = new Screen(_ppu, _joypad);
+        Ppu = new Ppu(_mmu, _interrupt);
+        _mmu.ConnectPpu(Ppu);
 
-        _cpu = new Cpu(this, _mmu, _registers, _interrupt, _logStream, _debugging, minConsoleLogLines, maxConsoleLogLines);
+        _cpu = new Cpu(this, _mmu, _registers, _interrupt);
     }
 
     // Synchronizes components for a given number of M-cycles.
@@ -77,47 +49,32 @@ public class Emulator
         for (int i = 0; i < n; i++)
         {
             _timer.Tick();
-            _ppu.Tick();
+            Ppu.Tick();
             _mmu.TickDma();
         }
     }
 
-    public void Start()
+    public void RunFrame()
     {
         const int CYCLES_PER_FRAME = 70224; // T-Cycles for one frame (4194304 / 59.7)
 
-        try
+        if (_cpu.terminate)
         {
-            while (!_screen.ShouldClose() && !_cpu.terminate)
-            {
-                long cyclesTarget = total_t_cycles + CYCLES_PER_FRAME;
-                while (total_t_cycles < cyclesTarget)
-                {
-                    if (!_cpu.Step())
-                    {
-                        // _cpu.Step() returns false on termination, which also sets _cpu.terminate.
-                        // The outer loop will catch this and exit.
-                        break;
-                    }
-                }
+            return;
+        }
 
-                // We've run enough cycles for one frame.
-                _screen.HandleEvents();
-                HandleSaves();
-                _screen.Update(); // This will draw the PPU's framebuffer to the window.
+        long cyclesTarget = total_t_cycles + CYCLES_PER_FRAME;
+        while (total_t_cycles < cyclesTarget)
+        {
+            if (!_cpu.Step())
+            {
+                // _cpu.Step() returns false on termination, which also sets _cpu.terminate.
+                break;
             }
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"An error occurred in the emulation loop: {ex.Message}");
-            Console.WriteLine(ex.StackTrace);
-        }
-        finally
-        {
-            // Cleanup
-            _screen.Terminate();
-            _logStream?.Close();
-        }
+
+        Joypad.HandleInput();
+        HandleSaves();
     }
 
     private void HandleSaves()
@@ -158,7 +115,7 @@ public class Emulator
 
             _cpu.SaveState(writer);
             _mmu.SaveState(writer);
-            _ppu.SaveState(writer);
+            Ppu.SaveState(writer);
             _timer.SaveState(writer);
             _interrupt.SaveState(writer);
         }
@@ -185,7 +142,7 @@ public class Emulator
 
             _cpu.LoadState(reader);
             _mmu.LoadState(reader);
-            _ppu.LoadState(reader);
+            Ppu.LoadState(reader);
             _timer.LoadState(reader);
             _interrupt.LoadState(reader);
 
