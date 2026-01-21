@@ -12,7 +12,6 @@ public class Mmu : Ram
 
     private bool _dmaActive = false;
     private int _dmaCyclesLeft = 0;
-    private ushort _dmaSourceAddr = 0;
 
     public Mmu(IMbc mbc)
     {
@@ -140,9 +139,33 @@ public class Mmu : Ram
                 _timer?.ResetDivCounter();
                 break;
             case 0xFF46: // DMA Transfer
-                _dmaActive = true;
-                _dmaCyclesLeft = 640; // 160 bytes * 4 cycles
-                _dmaSourceAddr = (ushort)(value << 8); break;
+                // _dmaActive = true;
+                // _dmaCyclesLeft = 640; // 160 bytes * 4 cycles
+                // _dmaSourceAddr = (ushort)(value << 8); break;
+                _dmaActive = true; // Lock CPU during DMA transfer. Unlock in TickDma().
+                _dmaCyclesLeft = 640;
+
+                // Had problems with NPCs "popping" in a frame later than they should have. 
+                // Trying to deliver data quicker to the PPU rather than waiting the full
+                // 640 cycles to see if it would help, but it didn't do much.
+                ushort source = (ushort)(value << 8);
+                for (int i = 0; i < 0xA0; i++)
+                {
+                    ushort srcAddr = (ushort)(source + i);
+
+                    byte data = srcAddr switch
+                    {
+                        <= 0x3FFF => _mbc.ReadLoRom(srcAddr),
+                        <= 0x7FFF => _mbc.ReadHiRom(srcAddr),
+                        <= 0x9FFF => ReadVram(srcAddr),
+                        <= 0xBFFF => _mbc.ReadEram(srcAddr),
+                        <= 0xDFFF => ReadWram(srcAddr),
+                        _ => 0xFF
+                    };
+
+                    Oam[i] = data;
+                }
+                break;
             case <= 0xFF7F:
                 WriteIo(addr, value);
                 break;
@@ -182,24 +205,6 @@ public class Mmu : Ram
         {
             _dmaActive = false;
             _dmaCyclesLeft = 0;
-
-            // Bulk transfer 160 bytes.
-            for (int i = 0; i < 0xA0; i++)
-            {
-                ushort addr = (ushort)(_dmaSourceAddr + i);
-
-                byte data = addr switch
-                {
-                    <= 0x3FFF => _mbc.ReadLoRom(addr),
-                    <= 0x7FFF => _mbc.ReadHiRom(addr),
-                    <= 0x9FFF => ReadVram(addr),
-                    <= 0xBFFF => _mbc.ReadEram(addr),
-                    <= 0xDFFF => ReadWram(addr),
-                    _ => 0xFF
-                };
-
-                Oam[i] = data;
-            }
         }
     }
 

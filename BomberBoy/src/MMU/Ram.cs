@@ -71,7 +71,7 @@ public class Ram
         {
             return Vram[addr - 0x8000];
         }
-        throw new IndexOutOfRangeException("Attempt to access VRAM failed: Out of range.");
+        throw new IndexOutOfRangeException($"Attempt to access VRAM failed: Address {addr:X4} out of range.");
     }
 
     public void WriteVram(ushort addr, byte value)

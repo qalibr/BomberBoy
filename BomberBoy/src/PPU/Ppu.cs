@@ -37,6 +37,8 @@ public class Ppu
 
     public byte CurrentMode => GetCurrentMode();
 
+    public bool FrameComplete;
+
     public Ppu(Mmu mmu, Interrupts interrupt)
     {
         _mmu = mmu;
@@ -98,6 +100,7 @@ public class Ppu
                             // After the last visible scanline is drawn, we enter V-Blank (Mode 1).
                             SetCurrentMode(1);
                             _interrupt.RequestInterrupt(Interrupts.InterruptType.VBLANK);
+                            FrameComplete = true; // Wait until the last scanline is drawn, this eliminated the screen tearing problem.
                         }
                         else
                         {

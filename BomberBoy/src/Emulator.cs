@@ -56,15 +56,13 @@ public class Emulator
 
     public void RunFrame()
     {
-        const int CYCLES_PER_FRAME = 70224; // T-Cycles for one frame (4194304 / 59.7)
-
         if (_cpu.terminate)
         {
             return;
         }
 
-        long cyclesTarget = total_t_cycles + CYCLES_PER_FRAME;
-        while (total_t_cycles < cyclesTarget)
+        Ppu.FrameComplete = false;
+        while (!Ppu.FrameComplete) // Waiting for the PPU to finish H-BLANK (end of the scanline).
         {
             if (!_cpu.Step())
             {
